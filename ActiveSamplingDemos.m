@@ -472,7 +472,8 @@ Ep      = L\(pC\pE + X'*ih*y);
 Cp      = inv(L);
 
 function [Ep,Cp] = AS_InferenceRCT(pE,pC,h,X,y)
-% This function ...
+% This function uses a variational Laplace procedure to infer the
+% parameters generating the data for a randomised controlled trial.
 
 Ep = pE;
 Cp = pC;
@@ -538,6 +539,8 @@ for i = 1:length(I)
 end
 
 function I = AS_InfoRCT(Ep,Cp,X,h,C)
+% This function computes the expected information gain under different
+% choices as to how to run an RCT.
 
 I = zeros(size(X,1),3);
 R = [1/3 1/2 2/3];      % Available randomisation ratios
@@ -633,6 +636,8 @@ for t = 1:size(X,1)     % Iterate over follow-up time
 end
 
 function AS_PlotIntervals(x,y,c,col)
+% This function plots 90% credible intervals
+
 if numel(c) == length(c)
     fill([x; flipud(x)],[y-1.64*sqrt(c); flipud(y)+1.64*sqrt(flipud(c))],col,'EdgeColor','none');    
 else
@@ -640,6 +645,7 @@ else
 end
 
 function X = AS_Basis(n,BASIS,x)
+% This function generates a set of basis functions.
 
 X = zeros(length(x),n);
 
