@@ -1,7 +1,11 @@
 function ActiveSamplingDemos
 % Series of demonstrations to accompany a paper written for the MDPI
 % journal Algorithms 'Bayesian Networks and Causal Reasoning' special
-% issue. 
+% issue. They are designed to showcase applications of active sampling
+% that maximises expected information gain to the selection of data 
+% samples either through experimental design or selection from a a 
+% large dataset. This can be thought of as analagous to the process of 
+% foveal sampling as used by biological systems
 %__________________________________________________________________________
 
 close all
@@ -27,7 +31,7 @@ ActiveSamplingBasis(BASIS,n,C,'int')
 % an explicit cost for this time gives us an opportunity to balance the
 % option to continue sampling against the 
 
-C = 1/16;            % Small probability of terminating sampling early
+C = 1/4;            % Small probability of terminating sampling early
 ActiveSamplingBasis(BASIS,n,C,'int')
 
 hf = exp(-8);       % Introduce unresolvable uncertainty
@@ -127,7 +131,7 @@ for i = 1:(min(28,length(x)))
     [Ep,Cp] = AS_Inference(Ep,Cp,h+hf*(a-100)^2,X(a,:),y);
 
     subplot(2,2,2)
-    c = diag(X*Cp*(X*Cp)') + h + hf*x.^2;
+    c = diag(X*Cp*X') + h + hf*x.^2;
     AS_PlotIntervals(x,X*Ep,c,[0.8,0.8,0.9]), hold on
     plot(x,X*Ep,'LineWidth',2,'Color',[0.1 0.1 0.4])
     plot(x(a),y,'.','MarkerSize',12,'Color',[0.2 0.2 0.6])
@@ -227,7 +231,7 @@ for i = 1:(length(x)/8)
     [Ep,Cp] = AS_Inference(Ep,Cp,h,kron(X(j,:),X(a,:)),y);
 
     subplot(3,2,2)
-    c = diag(kron(X(j,:),X)*Cp*(kron(X(j,:),X)*Cp)') + h;
+    c = diag(kron(X(j,:),X)*Cp*kron(X(j,:),X)') + h;
     AS_PlotIntervals(x,kron(X(j,:),X)*Ep,c,[0.8,0.8,0.9]), hold on
     plot(x,kron(X(j,:),X)*Ep,'LineWidth',2,'Color',[0.1 0.1 0.4])
     plot(x(a),y,'.','MarkerSize',12,'Color',[0.2 0.2 0.6])
@@ -394,7 +398,7 @@ for i = 1:Nc % Iterate over cohorts
     V(:,end-1) = 0; % Remove demographics for plotting
 
     % Treatment group
-    W           = sqrt(diag(V*Cp*(V*Cp)')); % Standard deviations
+    W           = sqrt(diag(V*Cp*V')); % Standard deviations
     cu          = cumprod(1./(1 + exp(-h*(W*1.64 + V*Ep)))) - cumprod(1./(1 + exp(-h*V*Ep)));
     cu          = [0; cu];         % Upper bound
     cl          = cumprod(1./(1 + exp(-h*V*Ep))) - cumprod(1./(1 + exp(-h*(-W*1.64 + V*Ep))));
@@ -404,7 +408,7 @@ for i = 1:Nc % Iterate over cohorts
     
     % Placebo group
     V(:,end)   = -1/2;
-    W           = sqrt(diag(V*Cp*(V*Cp)')); % Standard deviations
+    W           = sqrt(diag(V*Cp*V')); % Standard deviations
     cu          = cumprod(1./(1 + exp(-h*(W*1.64 + V*Ep)))) - cumprod(1./(1 + exp(-h*V*Ep)));
     cu          = [0; cu];         % Upper bound
     cl          = cumprod(1./(1 + exp(-h*V*Ep))) - cumprod(1./(1 + exp(-h*(-W*1.64 + V*Ep))));
@@ -530,12 +534,14 @@ end
 Cp = - pinv(dLdqq);
 
 function I = AS_Info(~,Cp,X,h,hf)
+% Information gain
+
 I = zeros(size(X,1),1);
 
 try hf; catch, hf = 0; end
 
 for i = 1:length(I)
-    I(i) = 0.5*log((X(i,:)*Cp)*(X(i,:)*Cp)' + (h + hf*(i-100).^2)) - 0.5*log(h + hf*(i-100).^2);
+    I(i) = 0.5*log((X(i,:)*Cp)*X(i,:)' + (h + hf*(i-100).^2)) - 0.5*log(h + hf*(i-100).^2);
 end
 
 function I = AS_InfoRCT(Ep,Cp,X,h,C)
